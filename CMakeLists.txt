@@ -36,6 +36,7 @@ if(NOT OpenCV_FOUND)
 endif()
 
 find_package(Eigen3 3.1.0 REQUIRED)
+find_package(g2o 1.0.0 REQUIRED)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -45,6 +46,7 @@ ${g2o_INCLUDE_DIR}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+link_directories("/usr/local/lib")
 
 add_library(${PROJECT_NAME} SHARED
 src/System.cc
@@ -65,9 +67,31 @@ src/Sim3Solver.cc
 src/Initializer.cc
 )
 
+find_package(PythonLibs REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+
+link_directories("/usr/local/lib")
+add_library(orb_slam SHARED
+  python_bridge/OrbSlam2PythonBridge.cpp
+)
+set_target_properties(orb_slam PROPERTIES PREFIX "")
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
-${g2o_LIBS}
+optimized g2o_core
+optimized g2o_solver_eigen
+optimized g2o_types_sba
+optimized g2o_types_sim3
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+)
+target_link_libraries(orb_slam
+${PROJECT_NAME}
+${OpenCV_LIBS}
+${EIGEN3_LIBS}
+optimized g2o_core
+optimized g2o_solver_eigen
+optimized g2o_types_sba
+optimized g2o_types_sim3
+${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+${PYTHON_LIBRARIES}
 )
